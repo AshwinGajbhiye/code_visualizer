@@ -199,25 +199,33 @@
 
 /* ---------- Description Bar ---------- */
 .viz-description {
-  padding: var(--space-sm) var(--space-lg);
-  background: var(--accent-primary-dim);
-  border-bottom: 1px solid var(--glass-border);
-  font-size: 0.82rem;
-  color: var(--text-accent);
-  font-weight: 500;
+  margin: 0 var(--space-lg) var(--space-lg) var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 60px;
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  min-height: 40px;
-}
-
-.viz-description__icon {
-  flex-shrink: 0;
-  opacity: 0.7;
 }
 
 .viz-description__text {
-  line-height: 1.4;
+  width: 100%;
+}
+
+.viz-description__loading {
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+  color: var(--text-muted);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 /* ---------- Visualization Body ---------- */

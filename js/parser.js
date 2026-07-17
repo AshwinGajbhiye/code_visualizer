@@ -151,6 +151,7 @@ export class Parser {
   }
 
   parseFunctionOrVarDecl() {
+    const line = this.current().line;
     const returnType = this.parseTypeSpec();
     const name = this.expect(TokenType.IDENTIFIER).value;
 
@@ -159,8 +160,24 @@ export class Parser {
       return this.parseFunctionDeclaration(returnType, name);
     }
 
-    // Variable declaration
-    return this.parseVarDeclRest(returnType, name);
+    // Variable declaration — parse the rest (init, semicolon)
+    let init = null;
+    if (this.match(TokenType.ASSIGN)) {
+      init = this.parseExpression();
+    } else if (this.is(TokenType.LPAREN)) {
+      this.advance();
+      const args = [];
+      while (!this.is(TokenType.RPAREN) && !this.is(TokenType.EOF)) {
+        if (args.length > 0) this.expect(TokenType.COMMA);
+        args.push(this.parseExpression());
+      }
+      this.expect(TokenType.RPAREN);
+      init = { type: 'ConstructorInit', args, line };
+    } else if (this.is(TokenType.LBRACE)) {
+      init = this.parseArrayLiteral();
+    }
+    this.match(TokenType.SEMICOLON);
+    return { type: NodeType.VariableDeclaration, varType: returnType, name, init, line };
   }
 
   /**

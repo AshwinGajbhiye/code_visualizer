@@ -9,25 +9,18 @@ A fully client-side step-by-step code visualizer and execution engine for C++ al
 - **Playback Controls:** Step forwards/backwards, control playback speed, and scrub through the execution timeline.
 
 ## Running Instructions
-Since this app relies on JavaScript modules (`type="module"`), you need to serve it over a local HTTP server to avoid CORS issues.
+Since this app uses an AI explanation feature powered by the Gemini API, you need to run the custom Python server to handle the API calls.
 
-### 1. Using Node.js / NPX
-If you have Node.js installed, you can simply run:
+### 1. Setup API Key (Optional)
+To use the AI explanation features, get a Gemini API key. If you don't provide one, or if it runs out of quota, the visualizer will still work using fallback parsing logic without AI explanations.
+
+### 2. Start the Server
+If you have Python installed, you can run the server and pass the API key as an environment variable:
 ```bash
-npx -y http-server . -p 8090 -c-1 --cors
+export GEMINI_API_KEY="your_api_key_here"
+python3 server.py
 ```
 Then navigate to `http://localhost:8090` in your web browser.
-
-### 2. Using Python
-If you have Python installed, you can run:
-```bash
-python3 -m http.server 8090
-```
-Then navigate to `http://localhost:8090`.
-
-### 3. Using VS Code
-If you use Visual Studio Code, you can install the **Live Server** extension.
-Right-click on `index.html` and select **Open with Live Server**.
 
 ## Usage
 - The editor will default to **Longest Substring Without Repeating Characters**.

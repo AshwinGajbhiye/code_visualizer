@@ -11,7 +11,7 @@ export class PlaybackController {
     this.currentStep = 0;
     this.isPlaying = false;
     this.speed = 1; // 1x
-    this.baseInterval = 800; // ms per step at 1x
+    this.baseInterval = 5000; // ms per step at 1x (5 seconds for reading)
     this.playTimer = null;
 
     // Callbacks

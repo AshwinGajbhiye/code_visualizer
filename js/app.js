@@ -124,6 +124,24 @@ const EXAMPLES = {
 }`,
     input: '[-2,1,-3,4,-1,2,1,-5,4]',
   },
+  'best-time-stock': {
+    name: 'Best Time to Buy and Sell Stock',
+    code: `int maxProfit(vector<int>& prices) {
+    int n = prices.size();
+    int profit = 0;
+    int l = 0, r = 1;
+    while (r < n) {
+        if (prices[r] > prices[l]) {
+            profit = max(profit, prices[r] - prices[l]);
+        } else {
+            l = r;
+        }
+        r++;
+    }
+    return profit;
+}`,
+    input: '[5, 1, 5, 6, 7, 1]',
+  },
 };
 
 /**
@@ -276,13 +294,22 @@ class App {
   /**
    * Run the code and generate visualization
    */
-  runCode() {
+  async runCode() {
     const code = this.getCode();
     const inputStr = document.getElementById('input-args').value.trim();
 
     if (!code.trim()) {
       this.showToast('Please enter some C++ code', 'error');
       return;
+    }
+
+    const descEl = document.getElementById('viz-description-text');
+    const runBtn = document.getElementById('btn-run');
+
+    // Disable run button during processing
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.querySelector('span:last-child').textContent = 'Running...';
     }
 
     try {
@@ -302,17 +329,48 @@ class App {
         this.showToast('No execution steps generated. Check your code.', 'error');
         return;
       }
-
-      // Load steps
-      this.currentSteps = steps;
+      
+      this.hideWelcome();
       this.visualizer.clear();
+
+      // Show loading state for AI explanations
+      if (descEl) {
+        descEl.innerHTML = '<span class="viz-description__loading">🤖 Generating AI step explanations...</span>';
+      }
+
+      // Fetch AI explanations from Gemini
+      try {
+        const response = await fetch('/api/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code,
+            steps: steps.map(s => ({ line: s.line, description: s.description }))
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.explanations && Array.isArray(data.explanations)) {
+            // Apply explanations, using fallback for any missing ones
+            steps.forEach((step, i) => {
+              if (i < data.explanations.length && data.explanations[i]) {
+                step.description = data.explanations[i];
+              }
+            });
+          }
+        } else {
+          console.error('AI explanation API returned status:', response.status);
+        }
+      } catch (err) {
+        console.error('Failed to fetch AI explanations:', err);
+        this.showToast('AI explanations unavailable, using defaults', 'info');
+      }
+
+      // Load steps into playback
+      this.currentSteps = steps;
       this.playback.loadSteps(steps);
 
-      // Hide welcome, show visualization
-      this.hideWelcome();
-
-      // Show description
-      const descEl = document.getElementById('viz-description-text');
+      // Show first step description
       if (descEl && steps[0]) {
         descEl.textContent = steps[0].description;
       }
@@ -320,11 +378,17 @@ class App {
       // Show console output (from last step)
       this.updateConsole(steps[steps.length - 1]);
 
-      this.showToast(`Generated ${steps.length} steps`, 'success');
+      this.showToast(`Generated ${steps.length} steps with AI explanations`, 'success');
 
     } catch (err) {
       console.error('Execution error:', err);
       this.showToast(err.message, 'error');
+    } finally {
+      // Re-enable run button
+      if (runBtn) {
+        runBtn.disabled = false;
+        runBtn.querySelector('span:last-child').textContent = 'Run';
+      }
     }
   }
 
