@@ -1,0 +1,231 @@
+/* ============================================
+   CODE VISUALIZER — Editor Panel Styles
+   ============================================ */
+
+/* ---------- Editor Panel ---------- */
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-panel__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.editor-panel__toolbar .select {
+  max-width: 260px;
+}
+
+.editor-panel__body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---------- CodeMirror Overrides ---------- */
+.cm-editor {
+  height: 100%;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+}
+
+.cm-editor .cm-scroller {
+  overflow: auto;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.cm-editor .cm-content {
+  padding: var(--space-md) 0;
+}
+
+.cm-editor .cm-gutters {
+  background: var(--bg-secondary) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+  min-width: 48px;
+}
+
+.cm-editor .cm-gutter.cm-lineNumbers .cm-gutterElement {
+  padding: 0 var(--space-sm) 0 var(--space-md);
+  min-width: 32px;
+  font-size: 12px;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: var(--accent-primary-dim) !important;
+  color: var(--accent-primary-light) !important;
+}
+
+.cm-editor .cm-activeLine {
+  background: var(--accent-primary-dim) !important;
+}
+
+.cm-editor .cm-selectionBackground {
+  background: rgba(108, 92, 231, 0.25) !important;
+}
+
+.cm-editor.cm-focused .cm-selectionBackground {
+  background: rgba(108, 92, 231, 0.3) !important;
+}
+
+.cm-editor .cm-cursor {
+  border-left-color: var(--accent-primary-light) !important;
+  border-left-width: 2px !important;
+}
+
+/* Highlighted line during execution */
+.cm-highlighted-line {
+  background: rgba(108, 92, 231, 0.2) !important;
+  border-left: 3px solid var(--accent-primary) !important;
+  margin-left: -3px;
+}
+
+.cm-executing-line {
+  background: rgba(253, 121, 168, 0.15) !important;
+  border-left: 3px solid var(--accent-highlight) !important;
+  margin-left: -3px;
+  position: relative;
+}
+
+.cm-executing-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(253, 121, 168, 0.08);
+  animation: linePulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes linePulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ---------- Input Area ---------- */
+.editor-panel__input {
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.input-group__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.input-group__row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: stretch;
+}
+
+.input-group__row .input {
+  flex: 1;
+}
+
+/* ---------- Run Button ---------- */
+.btn--run {
+  background: linear-gradient(135deg, var(--accent-primary), #5a4bd1);
+  border: none;
+  color: white;
+  font-weight: 700;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-default) var(--ease-default);
+  position: relative;
+  overflow: hidden;
+  min-width: 100px;
+}
+
+.btn--run::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1));
+  opacity: 0;
+  transition: opacity var(--duration-default) var(--ease-default);
+}
+
+.btn--run:hover {
+  box-shadow: 0 0 24px var(--accent-primary-glow);
+  transform: translateY(-1px);
+}
+
+.btn--run:hover::before {
+  opacity: 1;
+}
+
+.btn--run:active {
+  transform: translateY(0);
+}
+
+.btn--run.is-running {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  pointer-events: none;
+}
+
+.btn--run .btn__icon {
+  display: inline-flex;
+  transition: transform var(--duration-default) var(--ease-default);
+}
+
+.btn--run:hover .btn__icon {
+  transform: scale(1.1);
+}
+
+/* ---------- Console Output ---------- */
+.console-panel {
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-subtle);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.console-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.console-panel__title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.console-panel__body {
+  padding: var(--space-sm) var(--space-md);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--accent-secondary);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.console-panel__body .console-error {
+  color: var(--accent-error);
+}

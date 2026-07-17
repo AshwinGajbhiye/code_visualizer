@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Visualizer — Step-by-Step C++ Execution</title>
+  <meta name="description" content="Paste C++ code and visualize its execution step-by-step with animated data structures. Like NeetCode's code visualizer.">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <link rel="stylesheet" href="css/visualizer.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+  <div class="app">
+    <!-- ===== Header ===== -->
+    <header class="header">
+      <div class="header__logo">
+        <div class="header__icon">⚡</div>
+        <h1 class="header__title">Code Visualizer</h1>
+      </div>
+      <div class="header__actions">
+        <div class="select-wrapper">
+          <select id="example-select" class="select" aria-label="Select example">
+            <option value="longest-substring">Longest Substring Without Repeating Characters</option>
+            <option value="two-sum">Two Sum</option>
+            <option value="binary-search">Binary Search</option>
+            <option value="valid-parentheses">Valid Parentheses</option>
+            <option value="bubble-sort">Bubble Sort</option>
+            <option value="max-subarray">Kadane's Algorithm (Max Subarray)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Main Content ===== -->
+    <main class="main">
+      <!-- ===== Left Panel: Code Editor ===== -->
+      <div class="panel panel--editor">
+        <div class="editor-panel">
+          <div class="panel__header">
+            <span class="panel__title">C++ Code</span>
+            <span class="text-muted" style="font-size: 0.72rem; font-family: 'JetBrains Mono', monospace;">solution.cpp</span>
+          </div>
+
+          <div class="editor-panel__body">
+            <div id="code-editor"></div>
+          </div>
+
+          <!-- Input & Run -->
+          <div class="editor-panel__input">
+            <div class="input-group">
+              <label class="input-group__label" for="input-args">Function Arguments</label>
+              <div class="input-group__row">
+                <input
+                  id="input-args"
+                  class="input"
+                  type="text"
+                  placeholder='e.g. [2,7,11,15], 9 or "abcabcbb"'
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <button id="btn-run" class="btn--run" type="button">
+                  <span class="btn__icon">▶</span>
+                  <span>Run</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console Output -->
+          <div class="console-panel" id="console-panel" style="display: none;">
+            <div class="console-panel__header">
+              <span class="console-panel__title">Console</span>
+            </div>
+            <div class="console-panel__body" id="console-body"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Right Panel: Visualization ===== -->
+      <div class="panel panel--viz">
+        <div class="viz-panel">
+          <!-- Welcome State (shown before running code) -->
+          <div class="viz-welcome" id="viz-welcome">
+            <div class="viz-welcome__icon">🔍</div>
+            <div class="viz-welcome__title">Visualize Your Code</div>
+            <div class="viz-welcome__subtitle">
+              Write or paste C++ code on the left, provide inputs, and hit <strong>Run</strong> to see a step-by-step execution visualization.
+            </div>
+            <div class="viz-welcome__keys">
+              <div class="kbd">
+                <span class="kbd__key">Space</span> Play / Pause
+              </div>
+              <div class="kbd">
+                <span class="kbd__key">← →</span> Step
+              </div>
+              <div class="kbd">
+                <span class="kbd__key">[ ]</span> Speed
+              </div>
+            </div>
+          </div>
+
+          <!-- Visualization Container (shown after running) -->
+          <div class="viz-container" id="viz-container" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
+            <!-- Playback Controls -->
+            <div class="playback">
+              <div class="playback__controls">
+                <button class="playback__btn" id="btn-start" title="Go to start" aria-label="Go to start">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/></svg>
+                </button>
+                <button class="playback__btn" id="btn-prev" title="Previous step (←)" aria-label="Previous step">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+                <button class="playback__btn playback__btn--play" id="btn-play" title="Play / Pause (Space)" aria-label="Play or pause">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                </button>
+                <button class="playback__btn" id="btn-next" title="Next step (→)" aria-label="Next step">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </button>
+                <button class="playback__btn" id="btn-end" title="Go to end" aria-label="Go to end">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm10 0h2V6h-2v12z"/></svg>
+                </button>
+
+                <!-- Speed Controls -->
+                <div class="playback__speed">
+                  <button class="playback__speed-btn" data-speed="0.5">0.5x</button>
+                  <button class="playback__speed-btn is-active" data-speed="1">1x</button>
+                  <button class="playback__speed-btn" data-speed="2">2x</button>
+                  <button class="playback__speed-btn" data-speed="4">4x</button>
+                </div>
+
+                <!-- Step Counter -->
+                <div class="playback__step" id="step-display">
+                  <span class="playback__step-current">0</span> / 0
+                </div>
+              </div>
+
+              <!-- Timeline -->
+              <div class="playback__timeline">
+                <div class="timeline" id="timeline">
+                  <div class="timeline__track">
+                    <div class="timeline__progress" id="timeline-progress" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step Description -->
+            <div class="viz-description">
+              <span class="viz-description__icon">💡</span>
+              <span class="viz-description__text" id="viz-description-text">Ready to visualize...</span>
+            </div>
+
+            <!-- Variable Visualizations -->
+            <div class="viz-body" id="viz-body">
+              <!-- Data structure cards rendered here dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- App Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
