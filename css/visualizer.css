@@ -313,7 +313,7 @@
 
 .cell-row {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
 .cell {
@@ -708,4 +708,23 @@
   border-radius: 3px;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+/* ---------- Code Line Highlighting ---------- */
+.code-line-highlight {
+  background: linear-gradient(90deg, var(--accent-primary-dim) 0%, transparent 100%) !important;
+  border-left: 3px solid var(--accent-primary) !important;
+  animation: lineHighlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes lineHighlightPulse {
+  0%, 100% { background: linear-gradient(90deg, var(--accent-primary-dim) 0%, transparent 100%); }
+  50% { background: linear-gradient(90deg, rgba(107, 92, 231, 0.2) 0%, transparent 100%); }
+}
+
+/* Disabled run button during loading */
+.btn--run:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }

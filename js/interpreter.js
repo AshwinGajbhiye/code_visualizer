@@ -82,6 +82,9 @@ export class Interpreter {
     this.highlights = {};
     this.pointers = {};
     this.lastDescription = '';
+    // Track which scalar vars are used as indices into which arrays
+    // e.g. { "prices": ["l", "r", "i"] }
+    this.indexUsageMap = new Map();
   }
 
   /**
@@ -208,12 +211,39 @@ export class Interpreter {
       };
     }
 
+    // Auto-generate pointer metadata from indexUsageMap
+    const mergedHighlights = { ...extraHighlights };
+    for (const [arrName, indexVars] of this.indexUsageMap) {
+      if (allVars.has(arrName)) {
+        const arrVal = allVars.get(arrName);
+        if (Array.isArray(arrVal) || typeof arrVal === 'string') {
+          const pointers = {};
+          for (const varName of indexVars) {
+            if (allVars.has(varName)) {
+              const idx = allVars.get(varName);
+              if (typeof idx === 'number' && idx >= 0) {
+                pointers[varName] = idx;
+              }
+            }
+          }
+          if (Object.keys(pointers).length > 0) {
+            // Merge with existing highlights for this array
+            if (mergedHighlights[arrName] && typeof mergedHighlights[arrName] === 'object') {
+              mergedHighlights[arrName] = { ...mergedHighlights[arrName], pointers };
+            } else {
+              mergedHighlights[arrName] = { pointers };
+            }
+          }
+        }
+      }
+    }
+
     const step = {
       step: this.stepCount,
       line: line || 0,
       description: description || '',
       variables,
-      highlights: { ...extraHighlights },
+      highlights: mergedHighlights,
       pointers: { ...extraPointers },
       console: [...this.consoleOutput],
     };
@@ -460,7 +490,7 @@ export class Interpreter {
 
   execIf(node) {
     const condition = this.evalExpression(node.condition);
-    const condStr = this.exprToString(node.condition);
+    const condStr = this.exprToStringWithValues(node.condition);
 
     this.recordStep(node.line, `Check if ${condStr} → ${condition ? 'true' : 'false'}`);
 
@@ -489,7 +519,7 @@ export class Interpreter {
       // Condition
       if (node.condition) {
         const cond = this.evalExpression(node.condition);
-        const condStr = this.exprToString(node.condition);
+        const condStr = this.exprToStringWithValues(node.condition);
         this.recordStep(node.line, `Loop condition: ${condStr} → ${cond ? 'true' : 'false'}`);
         if (!cond) break;
       }
@@ -561,7 +591,7 @@ export class Interpreter {
     let iterations = 0;
     while (iterations < MAX_LOOP_ITERATIONS) {
       const cond = this.evalExpression(node.condition);
-      const condStr = this.exprToString(node.condition);
+      const condStr = this.exprToStringWithValues(node.condition);
       this.recordStep(node.line, `While ${condStr} → ${cond ? 'true' : 'false'}`);
       if (!cond) break;
 
@@ -717,6 +747,16 @@ export class Interpreter {
   evalIndex(node) {
     const obj = this.evalExpression(node.object);
     const idx = this.evalExpression(node.index);
+
+    // Track index usage for pointer annotations
+    const arrName = this.getExprName(node.object);
+    const idxName = this.getExprName(node.index);
+    if (arrName && idxName && typeof idx === 'number' && (Array.isArray(obj) || typeof obj === 'string')) {
+      if (!this.indexUsageMap.has(arrName)) {
+        this.indexUsageMap.set(arrName, new Set());
+      }
+      this.indexUsageMap.get(arrName).add(idxName);
+    }
 
     if (typeof obj === 'string') return obj[idx];
     if (Array.isArray(obj)) return obj[idx];
@@ -1132,6 +1172,63 @@ export class Interpreter {
         return `${this.exprToString(node.object)}.${node.property}`;
       default:
         return '...';
+    }
+  }
+
+  /**
+   * Like exprToString but shows actual resolved values for index expressions
+   * e.g. "prices[r] (5) > prices[l] (1)" instead of "prices[r(2)] > prices[l(1)]"
+   */
+  exprToStringWithValues(node) {
+    if (!node) return '';
+    switch (node.type) {
+      case NodeType.NumericLiteral: return node.value.toString();
+      case NodeType.StringLiteral: return `"${node.value}"`;
+      case NodeType.CharLiteral: return `'${node.value}'`;
+      case NodeType.BoolLiteral: return node.value.toString();
+      case NodeType.Identifier: {
+        try {
+          const val = this.getVar(node.name);
+          if (typeof val === 'number' || typeof val === 'boolean') {
+            return `${node.name} (${val})`;
+          }
+          if (typeof val === 'string' && val.length <= 5) {
+            return `${node.name} ("${val}")`;
+          }
+        } catch { /* ignore */ }
+        return node.name;
+      }
+      case NodeType.IndexExpression: {
+        const objStr = this.exprToString(node.object);
+        const idxName = this.getExprName(node.index);
+        try {
+          const obj = this.evalExpression(node.object);
+          const idx = this.evalExpression(node.index);
+          const val = Array.isArray(obj) ? obj[idx] : typeof obj === 'string' ? obj[idx] : undefined;
+          if (val !== undefined && idxName) {
+            return `${objStr}[${idxName}] (${this.formatValueForDesc(val)})`;
+          }
+          if (val !== undefined) {
+            return `${objStr}[${idx}] (${this.formatValueForDesc(val)})`;
+          }
+        } catch { /* ignore */ }
+        return `${objStr}[${this.exprToStringWithValues(node.index)}]`;
+      }
+      case NodeType.BinaryExpression:
+        return `${this.exprToStringWithValues(node.left)} ${node.operator} ${this.exprToStringWithValues(node.right)}`;
+      case NodeType.UnaryExpression:
+        return node.prefix ? `${node.operator}${this.exprToStringWithValues(node.operand)}` : `${this.exprToStringWithValues(node.operand)}${node.operator}`;
+      case NodeType.PostfixExpression:
+        return `${this.exprToStringWithValues(node.operand)}${node.operator}`;
+      case NodeType.CallExpression: {
+        const argStr = node.args.map(a => this.exprToStringWithValues(a)).join(', ');
+        if (node.object) return `${this.exprToStringWithValues(node.object)}.${node.method}(${argStr})`;
+        return `${node.method}(${argStr})`;
+      }
+      case NodeType.MemberExpression:
+        return `${this.exprToStringWithValues(node.object)}.${node.property}`;
+      default:
+        return this.exprToString(node);
     }
   }
 }

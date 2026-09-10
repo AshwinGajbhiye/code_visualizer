@@ -219,7 +219,8 @@ class App {
           color: '#a29bfe',
         },
         '.cm-activeLine': {
-          backgroundColor: 'rgba(108, 92, 231, 0.08)',
+          backgroundColor: 'transparent', // The gradient will be applied via the class or animation
+          animation: 'lineHighlightPulse 2s ease-in-out infinite',
         },
         '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
           backgroundColor: 'rgba(108, 92, 231, 0.25)',
